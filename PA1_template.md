@@ -12,12 +12,23 @@ output:
 ## Loading and Preprocessing the Data
 First, set the working directory to the location of the data. Then, unzip the file to extract the csv document.
 Convert the date variable to a date format.
-```{r load, echo=TRUE}
+
+```r
 setwd("~/work/coursera/ReproducibleResearch")
 unzip("repdata_data_activity.zip")
 mydata <- read.csv("activity.csv")
 mydata$date <- as.Date(mydata$date,format="%Y-%m-%d")
 head(mydata)
+```
+
+```
+##   steps       date interval
+## 1    NA 2012-10-01        0
+## 2    NA 2012-10-01        5
+## 3    NA 2012-10-01       10
+## 4    NA 2012-10-01       15
+## 5    NA 2012-10-01       20
+## 6    NA 2012-10-01       25
 ```
 
 
@@ -26,17 +37,21 @@ head(mydata)
 
 ## What is mean total number of steps taken per day?
 To show the distribution of the total number of steps taken per day, a histogram is plotted.
-```{r totalhistogram, echo=TRUE}
+
+```r
 agg <- tapply(mydata$steps,mydata$date,FUN=sum,na.rm=T)
 hist(agg,main="Histogram of Total Number of Steps",xlab="Number of Steps")
 ```
 
+![](PA1_template_files/figure-html/totalhistogram-1.png)<!-- -->
+
 Next, we calculate the mean and median.
-```{r meanmedian, echo=TRUE}
+
+```r
 meanval <- format(mean(agg,na.rm=TRUE),scientific=FALSE)
 med <- format(median(agg,na.rm=TRUE),scientific=FALSE)
 ```
-The mean of the total number of steps taken per day is `r meanval` while the median is `r med`.
+The mean of the total number of steps taken per day is 9354.23 while the median is 10395.
 
 
 
@@ -44,7 +59,8 @@ The mean of the total number of steps taken per day is `r meanval` while the med
 
 ## What is the average daily activity pattern?
 A plot of the average daily activity per interval is created to visualize a pattern.
-```{r average, echo=TRUE}
+
+```r
 library(ggplot2)
 avg <- aggregate(mydata$steps ~ mydata$interval, FUN=mean, na.rm=T)
 names(avg) <- c("Interval","Average")
@@ -52,7 +68,9 @@ maxavgstep <- avg$Interval[max(avg$Average)]
 ggplot(avg,aes(Interval,Average)) + geom_line() + labs(title="Average Daily Activity Pattern")
 ```
 
-This shows that, on average, the maximum number of steps occur in the `r maxavgstep` minute interval.
+![](PA1_template_files/figure-html/average-1.png)<!-- -->
+
+This shows that, on average, the maximum number of steps occur in the 1705 minute interval.
 
 
 
@@ -60,7 +78,8 @@ This shows that, on average, the maximum number of steps occur in the `r maxavgs
 
 ## Imputing Missing Values
 Missing values may produce misleading results. Therefore, NA values are replaced with the mean number of steps of that day.
-```{r missingvalues, echo=TRUE}
+
+```r
 totalNA <- sum(is.na(mydata$steps))
 newdata <- mydata
 NAvals <- is.na(newdata$steps)
@@ -74,24 +93,20 @@ par(mfrow=c(1,2))
 hist(agg,main="Old Histogram",xlab="Number of Steps")
 newagg <- tapply(newdata$steps,newdata$date,sum)
 hist(newagg,main="New Histogram",xlab="Number of Steps")
+```
 
+![](PA1_template_files/figure-html/missingvalues-1.png)<!-- -->
+
+```r
 newmeanval <- format(mean(newagg,na.rm=TRUE),scientific=FALSE)
 newmed <- format(median(newagg,na.rm=TRUE),scientific=FALSE)
 ```
-```{r wrongplot, echo=FALSE, results='hide'}
-newavg <- aggregate(newdata$steps ~ newdata$interval, FUN=mean)
-a <- cbind(avg,rep("old",nrow(avg)))
-names(a) <- c("Interval","Average","Data")
-b <- cbind(newavg,rep("new",nrow(newavg)))
-names(b) <- c("Interval","Average","Data")
-compareplot <- rbind(a,b)
-# ggplot(compareplot,aes(Interval,Average,color=Data)) + geom_line()+labs(title="Comparison of Average Daily Activity Pattern")
-```
-Total number of missing values in the dataset is `r totalNA`.
 
-The mean changed from `r meanval` to `r newmeanval`.
+Total number of missing values in the dataset is 2304.
 
-The median changed from `r med` to `r newmed`.
+The mean changed from 9354.23 to 10766.19.
+
+The median changed from 10395 to 10765.
 
 From the new histogram, it shows that the frequency of 0-5000 steps was reduced.
 
@@ -101,7 +116,8 @@ From the new histogram, it shows that the frequency of 0-5000 steps was reduced.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 A new variable is created to categorize each observation as "weekend" or "weekday". Two plots are then created to show the trend of the average steps per 5-minute interval.
-```{r week, echo=TRUE}
+
+```r
 newdata$week <- weekdays(newdata$date,abbreviate=TRUE)
 for(i in 1:nrow(newdata)){
   if(newdata$week[i]=="Sat"|newdata$week[i]=="Sun"){
@@ -120,5 +136,7 @@ par(mfrow=c(2,1),mar=c(2,4,2,1))
 with(wkendavg,plot(Interval,Average,type='l',main="Weekend"))
 with(wkdayavg,plot(Interval,Average,type='l',main="Weekday"))
 ```
+
+![](PA1_template_files/figure-html/week-1.png)<!-- -->
 
 The graphs show that there are generally lower number of steps, on average, during the weekdays compared to weekends.
